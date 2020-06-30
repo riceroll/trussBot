@@ -18,6 +18,3 @@ pip install -e gym-trussbot
 
 ### Examples
 Run examples scripts under the ``examples`` folder.
-
-
-# trussBot
