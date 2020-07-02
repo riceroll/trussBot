@@ -47,10 +47,13 @@ class CriterionShape(Criterion):
         super().__init__(model)
         self.nSteps = 1000
 
+        self.targetName = targetName
         self.targetMesh = None
-        self.setTarget(targetName)
 
     def __call__(self, x):
+        if self.targetMesh is None:
+            self.setTarget(self.targetName)
+
         self.env.reset()
         self.env.agent.setPolicy(x)
         for i in range(self.nSteps):
@@ -58,11 +61,11 @@ class CriterionShape(Criterion):
             self.env.step(action)
 
         (closest_points, distances, triangle_id) = self.targetMesh.nearest.on_surface(self.env.model.v)
-        distanceMean = np.mean(distances, axis=0)
+        distanceMean = np.mean(np.power(distances, 2), axis=0)
         return -distanceMean
 
     def setTarget(self, targetName):
-        name = os.path.join("./data/target/", targetName+".obj")
+        name = os.path.join(rootPath, "data/target/", targetName+".obj")
         try:
             self.targetMesh = trimesh.load(name)
         except:

@@ -14,12 +14,12 @@ class Agent(object):
         raise NotImplementedError('Please implement nextAction function.')
 
     def load(self, policyName):
-        name = os.path.join('./data/agent/', policyName+'.npy')
+        name = os.path.join(rootPath, 'data/agent/', policyName+'.npy')
         self.policy = np.load(name, allow_pickle=True)
         print(self.policy)
 
     def save(self, policyName):
-        name = os.path.join('./data/agent/', policyName)
+        name = os.path.join(rootPath, 'data/agent/', policyName)
         np.save(name, self.policy)
 
     def setPolicy(self, policy=None):
