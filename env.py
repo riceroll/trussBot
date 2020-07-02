@@ -3,7 +3,7 @@ import gym
 from model import Model
 from viewer import Viewer
 from agent import AgentBinary, AgentActuate
-from criterion import CriterionMoveForward, CriterionShape
+from criterion import CriterionMoveForward, CriterionShape, CriterionCurvedSheet
 from optimizer import EvolutionAlgorithm
 
 
@@ -39,9 +39,10 @@ class Env(gym.Env):
         return self.agent
 
     def setCriterion(self, criterionName="moveForward"):
-        criterionDict ={
+        criterionDict = {
             'moveForward': CriterionMoveForward,
-            'shape': CriterionShape
+            'shape': CriterionShape,
+            'curvedSheet': CriterionCurvedSheet
         }
         assert(criterionName in criterionDict)
         self.criterion = criterionDict[criterionName](self)

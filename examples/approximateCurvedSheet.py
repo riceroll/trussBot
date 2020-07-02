@@ -1,7 +1,7 @@
 import gym
 
 # ====== config ======
-train = False   # set train to True to use the pre-trained agent, False to train
+train = True   # set train to True to use the pre-trained agent, False to train
 
 
 # ============
@@ -10,13 +10,14 @@ name = 'approximateCurvedSheet'
 env = gym.make('gym_trussbot:trussbot-v0',      # name of the gym environment, details can be found under ./gym-trussbot
                modelName='8x8x1',
                agentName='actuate',
-               criterionName='shape',
+               criterionName='curvedSheet',
                timeStep=0.001
                )                        # initialize the environment
-env.criterion.setTarget('bending')        # set the target shape
 env.model.g = 0                         # disable gravity
 
 if train:
+    # env.optimizer.nSteps = 1
+    # env.optimizer.nPop = 2
     env.optimizer.maximize(nSteps=10)   # evolve for 10 generation
     p = env.optimizer.getSurvivor(i=0)  # pick the best gene(shrinkage ratio)
     env.agent.setPolicy(p)              # set the shrinkage ratio

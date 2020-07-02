@@ -56,6 +56,7 @@ class EvolutionAlgorithm(Optimizer):
     def evaluate(self, disp=False):
         popFloat = self.popIntToFloat(self.pop)
         pops = [p for p in popFloat]
+        print(len(pops))
         with Pool(multiprocessing.cpu_count()) as p:
             self.fits = np.array(p.map(self.env.criterion, pops))
 
@@ -132,6 +133,7 @@ class EvolutionAlgorithm(Optimizer):
         self.fits = np.pad(self.fits, (0, nDead), 'wrap')
 
     def maximize(self, nSteps=1):
+        self.initPop()
         self.evaluate(True)
         self.sort()
         for i in range(nSteps):

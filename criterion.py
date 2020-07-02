@@ -41,7 +41,7 @@ class CriterionMoveForward(Criterion):
 
 
 class CriterionShape(Criterion):
-    # the criterion is to change the shape to approximate the target shape
+    # the criterion is to minimize the different between a shape and a target shape
 
     def __init__(self, model, targetName="snake"):
         super().__init__(model)
@@ -70,3 +70,48 @@ class CriterionShape(Criterion):
             self.targetMesh = trimesh.load(name)
         except:
             print('No such target.')
+
+
+class CriterionCurvedSheet(Criterion):
+    # the criterion is to minimize the difference between the 8x8x1 model and a curved sheet math function
+
+    def __init__(self, model):
+        super().__init__(model)
+        self.nSteps = 1000
+        self.targetV = self.convertToTarget()
+
+    def convertToTarget(self):
+        print('The model is reset in CriterionBendingSheet.')
+        self.env.model.reset()
+        vs = self.env.model.v
+
+        R = 4
+        d = -0.6
+        ps = []
+        for v in vs:
+            x, y, z = v
+            alpha = (x - 4) / R
+            xx = 4 + R * np.sin(alpha)
+            zz = R + d - R * np.cos(alpha)
+            if z == 1:
+                vec = np.array([4 - xx, 0, R + d - zz])
+                vec = vec / np.sqrt(np.sum(vec ** 2))
+                xx = xx + vec[0]
+                zz = zz + vec[2]
+            ps.append(np.array([xx, y, zz]))
+        ps = np.array(ps)
+        ps = ps.reshape(-1, 3)
+        return ps
+
+    def __call__(self, x):
+        self.env.reset()
+        self.env.agent.setPolicy(x)
+        for i in range(self.nSteps):
+            action = self.env.getAction()
+            self.env.step(action)
+
+        assert(self.targetV.shape[1] == 3)
+        assert(self.env.model.v.shape[1] == 3)
+        squaredDistance = np.sum((self.targetV - self.env.model.v) ** 2, axis=1)
+        meanSquareDistance = np.mean(squaredDistance)
+        return -meanSquareDistance
