@@ -14,19 +14,27 @@ train = args.train
 preTrained = args.preTrained
 # ============
 
-name = 'approximateCurvedSheet'
+name = 'approximateCurvedSheetLarge'
 env = gym.make('gym_trussbot:trussbot-v0',      # name of the gym environment, details can be found under ./gym-trussbot
                modelName='8x8x1',
                agentName='actuate',
                criterionName='curvedSheet',
-               timeStep=0.001
+               timeStep=0.0005
                )                        # initialize the environment
+
+# setting
 env.model.g = 0                         # disable gravity
+env.model.sMax = 0.5                    # increase shrinkage ratio
+env.model.reset()
+env.optimizer.nStages = 2
+env.optimizer.reset()
+
+# env.optimizer.nSteps = 1
+env.optimizer.nPop = 40
+env.optimizer.pbMut = 0.2
+env.optimizer.pbMutDig = 0.4
 
 if train:
-    # env.optimizer.nSteps = 1
-    env.optimizer.nPop = 80
-
     if preTrained:
         env.optimizer.load(name)
     env.optimizer.maximize(nSteps=50)   # evolve for 10 generation

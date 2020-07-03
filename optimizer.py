@@ -1,6 +1,8 @@
+import os
 from pathos.multiprocessing import ProcessPool as Pool
 import multiprocessing
 import numpy as np
+rootPath = os.path.split(os.path.realpath(__file__))[0]
 
 
 class Optimizer(object):
@@ -19,9 +21,9 @@ class EvolutionAlgorithm(Optimizer):
         self.lb = self.env.model.actionSpace.low
         self.ub = self.env.model.actionSpace.high
         self.nStages = 4
-        self.interval = (self.ub - self.lb) / 4
+        self.interval = (self.ub - self.lb) / self.nStages
         self.lbInt = np.zeros_like(self.lb)
-        self.ubInt = np.ones_like(self.ub) * self.nStages
+        self.ubInt = np.ones_like(self.ub) * (self.nStages + 1)
 
         self.nPop = nPop
         self.mortality = mortality
@@ -36,6 +38,8 @@ class EvolutionAlgorithm(Optimizer):
         self.pop = None
         self.fits = None
         self.nGen = None
+        self.preTrained = False     # if True, a gene will be loaded into population under ``load`` function
+        self.policyName = None
 
         self.reset()
 
@@ -43,6 +47,25 @@ class EvolutionAlgorithm(Optimizer):
         self.nGen = 0
         self.oldPop = None
         self.initPop()
+
+        self.lb = self.env.model.actionSpace.low
+        self.ub = self.env.model.actionSpace.high
+        self.interval = (self.ub - self.lb) / self.nStages
+        self.lbInt = np.zeros_like(self.lb)
+        self.ubInt = np.ones_like(self.ub) * (self.nStages + 1)
+
+    def getSurvivor(self, i=0):
+        return self.popIntToFloat(self.pop[i])
+
+    def load(self, policyName):
+        # load a pre-trained gene into population
+        self.preTrained = True
+        self.policyName = policyName
+        name = os.path.join(rootPath, 'data/agent/', self.policyName + '.npy')
+        p = np.load(name, allow_pickle=True)
+        p = self.popFloatToInt(p)
+        assert(self.pop[0].shape == p.shape)
+        self.pop[0] = p
 
     def randPop(self, n):
         return np.random.randint(self.lbInt, self.ubInt, size=(n, len(self.lbInt)))
@@ -53,10 +76,14 @@ class EvolutionAlgorithm(Optimizer):
     def popIntToFloat(self, pop):
         return pop * self.interval
 
+    def popFloatToInt(self, pop):
+        pop = pop / self.interval
+        assert( (pop == pop.astype(np.int)).all() )
+        return pop
+
     def evaluate(self, disp=False):
         popFloat = self.popIntToFloat(self.pop)
         pops = [p for p in popFloat]
-        print(len(pops))
         with Pool(multiprocessing.cpu_count()) as p:
             self.fits = np.array(p.map(self.env.criterion, pops))
 
@@ -69,9 +96,6 @@ class EvolutionAlgorithm(Optimizer):
             print('mean: ', meanFit)
             print('max: ', maxFit)
             print('min: ', minFit)
-
-    def getSurvivor(self, i=0):
-        return self.popIntToFloat(self.pop[i])
 
     def sort(self):
         order = np.argsort(self.fits)[::-1]
@@ -134,6 +158,8 @@ class EvolutionAlgorithm(Optimizer):
 
     def maximize(self, nSteps=1):
         self.initPop()
+        if self.preTrained:
+            self.load(self.policyName)
         self.evaluate(True)
         self.sort()
         for i in range(nSteps):

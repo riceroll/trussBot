@@ -74,6 +74,7 @@ class CriterionShape(Criterion):
 
 class CriterionCurvedSheet(Criterion):
     # the criterion is to minimize the difference between the 8x8x1 model and a curved sheet math function
+    R = 3
 
     def __init__(self, model):
         super().__init__(model)
@@ -85,7 +86,7 @@ class CriterionCurvedSheet(Criterion):
         self.env.model.reset()
         vs = self.env.model.v
 
-        R = 4
+        R = CriterionCurvedSheet.R
         d = -0.6
         ps = []
         for v in vs:
